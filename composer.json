@@ -1,0 +1,5 @@
+{
+    "require": {
+        "metaregistrar/php-epp-client": "^1.0"
+    }
+}
