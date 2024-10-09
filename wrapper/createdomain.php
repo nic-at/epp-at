@@ -33,9 +33,10 @@ $nameserver = (array) ($params['nameserver'] ?? []);
 $registrant = $params['registrant'] ?? '';
 $techc = (array) ($params['techc'] ?? []);
 $secdns = $params['secdns'] ?? '';
+$auth = $params['authinfo'] ?? '';
 
 // Ensure required parameters are there
-if (!($serverstring && $domain && $nameserver && $registrant && $techc)) {
+if (!($serverstring && $domain && $nameserver && $registrant && $techc && $auth)) {
     usage();
 }
 
@@ -84,9 +85,7 @@ try {
     foreach ($techc as $handle) {
         $eppDomain->addContact(new eppContactHandle($handle, 'tech'));
     }
-    if ($auth = ($params['authinfo'] ?? '')) {
-        $eppDomain->setAuthorisationCode($auth);
-    }
+    $eppDomain->setAuthorisationCode($auth);
     foreach ($nameserver as $ns) {
         $host = explode('/', $ns);
         if (count($host) == 1) {
@@ -185,7 +184,7 @@ usage:
                 [--nameserver <nsname>[/<ipaddr>[/<ipaddr>]]
                 --registrant <registrant>
                 --techc <tech-c>
-                [--authinfo \$'<authinfo>']
+                --authinfo \$'<authinfo>'
                 [--secdns "keyTag=>'12346', alg=>3, digestType=>1, digest=>'49FD46E6C4B45C55D4DD'"]
 		[--cltrid <cltrid>]
 		[--logdir <directory>]
