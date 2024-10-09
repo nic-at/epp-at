@@ -9,6 +9,7 @@ use Metaregistrar\EPP\eppContactHandle;
 use Metaregistrar\EPP\eppDomain;
 use Metaregistrar\EPP\eppHost;
 use Metaregistrar\EPP\eppSecdns;
+use Metaregistrar\EPP\eppException;
 
 $opts = [
     'server:',
@@ -65,18 +66,18 @@ try {
     }
 
     $connection = new atEppConnection($logging);
-    $connection->setHostname($hostname);
+    $connection->setHostname('ssl://' . $hostname);
     $connection->setPort($port);
     $connection->setTimeout(10);
+    $connection->setVerifyPeer(false);
 
     if ($logging) {
-        $connection->setLogFile(trim($logdir, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . date('Y-m-d') . '.log');
+        $connection->setLogFile(rtrim($logdir, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . date('Y-m-d') . '.log');
     }
-    $connection->connect();
-
+    $connected = $connection->connect();
     $connection->setUsername($username);
     $connection->setPassword($password);
-    $connection->login();
+    $logged_in = $connection->login();
 
     $eppDomain = new eppDomain($domain);
     $eppDomain->setRegistrant(new eppContactHandle($registrant, 'reg'));
@@ -153,8 +154,9 @@ try {
         echo "ATTR: crDate: {$date}\n";
     }
 
-} catch (\Exception $e) {
-    echo $e->getMessage();
+} catch (eppException $e) {
+    echo $e->getMessage() . "\n";
+    check_and_print_conditions(json_decode($e->getReason(), true));
     exit -1;
 }
 
