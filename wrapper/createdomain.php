@@ -161,6 +161,7 @@ try {
 }
 
 function check_and_print_conditions($conditions) {
+    if (!is_array($conditions)) return false;
     foreach ($conditions as $condition) {
         if (!empty($condition['message'])) {
             echo "Msg: {$condition['message']}\n";
