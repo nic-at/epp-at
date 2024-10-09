@@ -8,6 +8,7 @@ use Metaregistrar\EPP\atEppCreateDomainRequest;
 use Metaregistrar\EPP\eppContactHandle;
 use Metaregistrar\EPP\eppDomain;
 use Metaregistrar\EPP\eppHost;
+use Metaregistrar\EPP\eppSecdns;
 
 $opts = [
     'server:',
@@ -22,6 +23,7 @@ $opts = [
     'logfile',
     'nossl',
 ];
+
 $params = getopt('', $opts);
 
 $serverstring = $params['server'] ?? '';
@@ -42,15 +44,6 @@ if (!preg_match('/^([\w\d]+):([\S:@]+)@(\S+):(\d+)$/', $serverstring, $matches))
     exit -1;
 }
 [, $username, $password, $hostname, $port] = $matches;
-
-// Check secdns
-if ($secdns) {
-    $secdnsarray = array_reduce(explode(',', $secdns), function($carry, $item) {
-        [$key, $value] = array_map('trim', explode('=>', $item));
-        $carry[$key] = trim($value, "'\"");
-        return $carry;
-    }, []);
-}
 
 // Check nossl
 if (isset($params['nossl'])) {
@@ -90,7 +83,9 @@ try {
     foreach ($techc as $handle) {
         $eppDomain->addContact(new eppContactHandle($handle, 'tech'));
     }
-    $eppDomain->setAuthorisationCode('40tYsiachAb3zi@#');
+    if ($auth = ($params['authinfo'] ?? '')) {
+        $eppDomain->setAuthorisationCode($auth);
+    }
     foreach ($nameserver as $ns) {
         $host = explode('/', $ns);
         if (count($host) == 1) {
@@ -103,6 +98,23 @@ try {
                 }
                 $eppDomain->addHost(new eppHost($host[0], $host[$i]));
             }
+        }
+    }
+
+    // Check secdns
+    if ($secdns) {
+        $secdnsarray = array_reduce(explode(',', $secdns), function($carry, $item) {
+            [$key, $value] = array_map('trim', explode('=>', $item));
+            $carry[$key] = trim($value, "'\"");
+            return $carry;
+        }, []);
+        if (!empty($secdnsarray['keyTag']) && !empty($secdnsarray['digestType']) && !empty($secdnsarray['digest']) && !empty($secdnsarray['alg'])) {
+            $eppSecdns = new eppSecdns();
+            $eppSecdns->setKeytag($secdnsarray['keyTag']);
+            $eppSecdns->setDigestType($secdnsarray['digestType']);
+            $eppSecdns->setDigest($secdnsarray['digest']);
+            $eppSecdns->setAlgorithm($secdnsarray['alg']);
+            $eppDomain->addSecdns($eppSecdns);
         }
     }
 
@@ -119,11 +131,43 @@ try {
     $connection->logout();
     $connection->disconnect();
 
-    echo $response->SaveXML();
+    if ($response->Success()) {
+        echo 'SUCCESS: ' . $response->getResultCode() . "\n";
+    } else {
+        echo 'FAILED: ' . $response->getResultCode() . "\n";
+        echo 'Domain create failed: ' . $response->getResultMessage() . "\n\n";
+    }
+
+    check_and_print_conditions($response->getExtensionResult());
+
+    echo "\nATTR: clTRID: " . $response->getClTrId() . "\n";
+    echo "ATTR: svTRID: " . $response->getSvTrId() . "\n";
+
+    if ($name = $response->getDomainCreated()) {
+        echo "ATTR: name: $name\n";
+    }
+    if ($date = $response->getDomainCreateDate()) {
+        if ($time = strtotime($date)) {
+            $date = date('c', $time);
+        }
+        echo "ATTR: crDate: {$date}\n";
+    }
 
 } catch (\Exception $e) {
     echo $e->getMessage();
     exit -1;
+}
+
+function check_and_print_conditions($conditions) {
+    foreach ($conditions as $condition) {
+        if (!empty($condition['message'])) {
+            echo "Msg: {$condition['message']}\n";
+        }
+        if (!empty($condition['details'])) {
+            echo "Details: {$condition['details']}\n";
+        }
+        echo "\n";
+    }
 }
 
 function usage() {
