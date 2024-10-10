@@ -153,7 +153,7 @@ try {
     }
 
     echo "ATTR: disclose: phone " . (1 - $response->getWhoisHidePhone()) . "\n";
-    echo "ATTR: disclose: fax " . (1 - $response->getWhoisHidePhone()) . "\n";
+    echo "ATTR: disclose: fax " . (1 - $response->getWhoisHideFax()) . "\n";
     echo "ATTR: disclose: email " . (1 - $response->getWhoisHideEmail()) . "\n";
 
     if ($type = $response->getPersonType()) {
