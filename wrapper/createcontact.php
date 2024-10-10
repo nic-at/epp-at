@@ -40,7 +40,7 @@ $street = $params['street'] ?? '';
 $city = $params['city'] ?? '';
 $country = $params['country'] ?? '';
 $postalcode = $params['postalcode'] ?? '';
-$phone = $params['phone'] ?? '';
+$phone = $params['voice'] ?? '';
 $fax = $params['fax'] ?? null;
 $email = $params['email'] ?? '';
 $type = $params['type'] ?? '';
@@ -113,8 +113,19 @@ try {
     $connection->setPassword($password);
     $logged_in = $connection->login();
 
+    $hideEmail = 0 == ($params['disclose-email'] ?? 1);
+    $hidePhone = 0 == ($params['disclose-phone'] ?? 1);
+    $hideFax = 0 == ($params['disclose-fax'] ?? 1);
+
     $postalInfo = new eppContactPostalInfo($name, $city, $country, $org, $street, null, $postalcode);
-    $contact = new atEppContact($postalInfo, $type, $email, $phone, $fax, 0 == ($params['disclose-email'] ?? 1), 0 == ($params['disclose-phone'] ?? 1), 0 == ($params['disclose-fax'] ?? 1));
+    $contact = new atEppContact($postalInfo, $type, $email, $phone, $fax, $hideEmail, $hidePhone, $hideFax);
+
+    // Registry default behaviour disclose=1
+    // is something is hidden set the disclose-policy
+    if ($hideEmail || $hidePhone || $hideFax) {
+        $contact->setDisclose(0);
+    }
+
     $ext = new atEppCreateContactExtension($contact);
 
     $request = new atEppCreateContactRequest($contact, $ext);
