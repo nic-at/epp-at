@@ -116,133 +116,127 @@ try {
         echo "ATTR: svTRID: " . $response->getSvTrId() . "\n";
     }
 
-    $chg = new atEppDomain($domain);
-    $add = $rem = null;
+    if ($addns || $delns || $registrant || $addtechc || $deltechc || $addsecdns || $delsecdns || $delallsecdns || $auth) {
 
-    if ($registrant) {
-        $chg->setRegistrant(new atEppContactHandle($registrant, 'reg'));
-    }
+        $chg = new atEppDomain($domain);
+        $add = $rem = null;
 
-    if ($auth) {
-        $chg->setAuthorisationCode($auth);
-    }
+        if ($registrant) {
+            $chg->setRegistrant(new atEppContactHandle($registrant, 'reg'));
+        }
 
-    // Handle nameserver
-    foreach ($delns as $ns) {
-        if (!$rem) $rem = new atEppDomain($domain);
-        $rem->addHost(new eppHost($ns));
-    }
+        if ($auth) {
+            $chg->setAuthorisationCode($auth);
+        }
 
-    foreach ($addns as $ns) {
-        if (!$add) $add = new atEppDomain($domain);
-        $host = explode('/', $ns);
-        if (count($host) == 1) {
-            $add->addHost(new eppHost($host[0]));
-        } else {
-            for ($i = 1; $i < count($host); $i++) {
-                if ($host[$i] && !filter_var($host[$i], FILTER_VALIDATE_IP, FILTER_FLAG_IPV4) && !filter_var($host[$i], FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)) {
-                    fwrite(STDERR, $host[$i] . " is not a valid IPv4/IPv6 Address\n");
-                    exit -1;
+        // Handle nameserver
+        foreach ($delns as $ns) {
+            if (!$rem) $rem = new atEppDomain($domain);
+            $rem->addHost(new eppHost($ns));
+        }
+
+        foreach ($addns as $ns) {
+            if (!$add) $add = new atEppDomain($domain);
+            $host = explode('/', $ns);
+            if (count($host) == 1) {
+                $add->addHost(new eppHost($host[0]));
+            } else {
+                for ($i = 1; $i < count($host); $i++) {
+                    if ($host[$i] && !filter_var($host[$i], FILTER_VALIDATE_IP, FILTER_FLAG_IPV4) && !filter_var($host[$i], FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)) {
+                        fwrite(STDERR, $host[$i] . " is not a valid IPv4/IPv6 Address\n");
+                        exit -1;
+                    }
+                    $add->addHost(new eppHost($host[0], $host[$i]));
                 }
-                $add->addHost(new eppHost($host[0], $host[$i]));
             }
         }
-    }
 
-    // Handle techc
-    foreach ($deltechc as $handle) {
-        if (!$rem) $rem = new atEppDomain($domain);
-        $rem->addContact(new atEppContactHandle($handle, 'tech'));
-    }
-
-    foreach ($addtechc as $handle) {
-        if (!$add) $add = new atEppDomain($domain);
-        $add->addContact(new atEppContactHandle($handle, 'tech'));
-    }
-
-    // Check secdns
-    foreach ($addsecdns as $secdns) {
-        $secdnsarray = array_reduce(explode(',', $secdns), function($carry, $item) {
-            [$key, $value] = array_map('trim', explode('=>', $item));
-            $carry[$key] = trim($value, "'\"");
-            return $carry;
-        }, []);
-        if (!empty($secdnsarray['keyTag']) && !empty($secdnsarray['digestType']) && !empty($secdnsarray['digest']) && !empty($secdnsarray['alg'])) {
-            $eppSecdns = new eppSecdns();
-            $eppSecdns->setKeytag($secdnsarray['keyTag']);
-            $eppSecdns->setDigestType($secdnsarray['digestType']);
-            $eppSecdns->setDigest($secdnsarray['digest']);
-            $eppSecdns->setAlgorithm($secdnsarray['alg']);
-            if (!$add) $add = new atEppDomain($domain);
-            $add->addSecdns($eppSecdns);
-        }
-    }
-
-    foreach ($delsecdns as $secdns) {
-        $secdnsarray = array_reduce(explode(',', $secdns), function($carry, $item) {
-            [$key, $value] = array_map('trim', explode('=>', $item));
-            $carry[$key] = trim($value, "'\"");
-            return $carry;
-        }, []);
-        if (!empty($secdnsarray['keyTag']) && !empty($secdnsarray['digestType']) && !empty($secdnsarray['digest']) && !empty($secdnsarray['alg'])) {
-            $eppSecdns = new eppSecdns();
-            $eppSecdns->setKeytag($secdnsarray['keyTag']);
-            $eppSecdns->setDigestType($secdnsarray['digestType']);
-            $eppSecdns->setDigest($secdnsarray['digest']);
-            $eppSecdns->setAlgorithm($secdnsarray['alg']);
+        // Handle techc
+        foreach ($deltechc as $handle) {
             if (!$rem) $rem = new atEppDomain($domain);
-            $rem->addSecdns($eppSecdns);
+            $rem->addContact(new atEppContactHandle($handle, 'tech'));
         }
-    }
 
-    if ($delallsecdns) {
-        // In order to delete all the secdns we need to fetch them first
-        $request = new eppInfoDomainRequest(new atEppDomain($domain));
+        foreach ($addtechc as $handle) {
+            if (!$add) $add = new atEppDomain($domain);
+            $add->addContact(new atEppContactHandle($handle, 'tech'));
+        }
+
+        // Check secdns
+        foreach ($addsecdns as $secdns) {
+            $secdnsarray = array_reduce(explode(',', $secdns), function($carry, $item) {
+                [$key, $value] = array_map('trim', explode('=>', $item));
+                $carry[$key] = trim($value, "'\"");
+                return $carry;
+            }, []);
+            if (!empty($secdnsarray['keyTag']) && !empty($secdnsarray['digestType']) && !empty($secdnsarray['digest']) && !empty($secdnsarray['alg'])) {
+                $eppSecdns = new eppSecdns();
+                $eppSecdns->setKeytag($secdnsarray['keyTag']);
+                $eppSecdns->setDigestType($secdnsarray['digestType']);
+                $eppSecdns->setDigest($secdnsarray['digest']);
+                $eppSecdns->setAlgorithm($secdnsarray['alg']);
+                if (!$add) $add = new atEppDomain($domain);
+                $add->addSecdns($eppSecdns);
+            }
+        }
+
+        foreach ($delsecdns as $secdns) {
+            $secdnsarray = array_reduce(explode(',', $secdns), function($carry, $item) {
+                [$key, $value] = array_map('trim', explode('=>', $item));
+                $carry[$key] = trim($value, "'\"");
+                return $carry;
+            }, []);
+            if (!empty($secdnsarray['keyTag']) && !empty($secdnsarray['digestType']) && !empty($secdnsarray['digest']) && !empty($secdnsarray['alg'])) {
+                $eppSecdns = new eppSecdns();
+                $eppSecdns->setKeytag($secdnsarray['keyTag']);
+                $eppSecdns->setDigestType($secdnsarray['digestType']);
+                $eppSecdns->setDigest($secdnsarray['digest']);
+                $eppSecdns->setAlgorithm($secdnsarray['alg']);
+                if (!$rem) $rem = new atEppDomain($domain);
+                $rem->addSecdns($eppSecdns);
+            }
+        }
+
+        if ($delallsecdns) {
+            // In order to delete all the secdns we need to fetch them first
+            $request = new eppInfoDomainRequest(new atEppDomain($domain));
+            $response = $connection->request($request);
+
+            if ($secdns = $response->getKeydata()) {
+                if (!$rem) $rem = new atEppDomain($domain);
+                foreach ($secdns as $n) {
+                    $rem->addSecdns($n);
+                }
+            }
+        }
+
+        $request = new atEppUpdateDomainRequest($domain, $add, $rem, $chg, true);
+        if ($cltrid = ($params['cltrid'] ?? '')) {
+            if (strlen($cltrid) > 64 || strlen($cltrid) < 4 ) {
+                fwrite(STDERR, "--cltrid must be between 3 and 64 characters\n");
+                exit -1;
+            }
+            $request->sessionid = $cltrid;
+        }
+
         $response = $connection->request($request);
 
-        if ($secdns = $response->getKeydata()) {
-            if (!$rem) $rem = new atEppDomain($domain);
-            foreach ($secdns as $n) {
-                $rem->addSecdns($n);
-            }
+        if ($response->Success()) {
+            echo 'SUCCESS: ' . $response->getResultCode() . "\n";
+        } else {
+            echo 'FAILED: ' . $response->getResultCode() . "\n";
+            echo 'Domain update failed: ' . $response->getResultMessage() . "\n\n";
         }
+
+        check_and_print_conditions($response->getExtensionResult());
+
+        echo "\nATTR: clTRID: " . $response->getClTrId() . "\n";
+        echo "ATTR: svTRID: " . $response->getSvTrId() . "\n";
+
     }
-
-    $request = new atEppUpdateDomainRequest($domain, $add, $rem, $chg, true);
-    if ($cltrid = ($params['cltrid'] ?? '')) {
-		if (strlen($cltrid) > 64 || strlen($cltrid) < 4 ) {
-			fwrite(STDERR, "--cltrid must be between 3 and 64 characters\n");
-			exit -1;
-		}
-        $request->sessionid = $cltrid;
-    }
-
-    $response = $connection->request($request);
-
-    if ($response->Success()) {
-        echo 'SUCCESS: ' . $response->getResultCode() . "\n";
-    } else {
-        echo 'FAILED: ' . $response->getResultCode() . "\n";
-        echo 'Domain update failed: ' . $response->getResultMessage() . "\n\n";
-    }
-
-    check_and_print_conditions($response->getExtensionResult());
-
-    echo "\nATTR: clTRID: " . $response->getClTrId() . "\n";
-    echo "ATTR: svTRID: " . $response->getSvTrId() . "\n";
 
     $connection->logout();
     $connection->disconnect();
-
-    if ($name = $response->getDomainCreated()) {
-        echo "ATTR: name: $name\n";
-    }
-    if ($date = $response->getDomainCreateDate()) {
-        if ($time = strtotime($date)) {
-            $date = date('c', $time);
-        }
-        echo "ATTR: crDate: {$date}\n";
-    }
 
 } catch (eppException $e) {
     echo $e->getMessage() . "\n";
