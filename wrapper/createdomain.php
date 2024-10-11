@@ -5,8 +5,8 @@ require_once dirname(__DIR__) . '/vendor/autoload.php';
 
 use Metaregistrar\EPP\atEppConnection;
 use Metaregistrar\EPP\atEppCreateDomainRequest;
-use Metaregistrar\EPP\eppContactHandle;
-use Metaregistrar\EPP\eppDomain;
+use Metaregistrar\EPP\atEppContactHandle;
+use Metaregistrar\EPP\atEppDomain;
 use Metaregistrar\EPP\eppHost;
 use Metaregistrar\EPP\eppSecdns;
 use Metaregistrar\EPP\eppException;
@@ -80,10 +80,10 @@ try {
     $connection->setPassword($password);
     $logged_in = $connection->login();
 
-    $eppDomain = new eppDomain($domain);
-    $eppDomain->setRegistrant(new eppContactHandle($registrant, 'reg'));
+    $eppDomain = new atEppDomain($domain);
+    $eppDomain->setRegistrant(new atEppContactHandle($registrant, 'reg'));
     foreach ($techc as $handle) {
-        $eppDomain->addContact(new eppContactHandle($handle, 'tech'));
+        $eppDomain->addContact(new atEppContactHandle($handle, 'tech'));
     }
     $eppDomain->setAuthorisationCode($auth);
     foreach ($nameserver as $ns) {
