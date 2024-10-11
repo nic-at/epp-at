@@ -4,7 +4,6 @@
 require_once dirname(__DIR__) . '/vendor/autoload.php';
 
 use Metaregistrar\EPP\atEppConnection;
-use Metaregistrar\EPP\eppLoginRequest;
 use Metaregistrar\EPP\eppException;
 
 $opts = [
