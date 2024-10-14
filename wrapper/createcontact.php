@@ -135,6 +135,7 @@ try {
 			exit -1;
 		}
         $request->sessionid = $cltrid;
+        $request->addSessionId();
     }
 
     $response = $connection->request($request);

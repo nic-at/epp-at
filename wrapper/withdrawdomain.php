@@ -70,6 +70,15 @@ try {
     $logged_in = $connection->login();
 
     $request = new atEppWithdrawRequest(new atEppDomain($domain), $zd);
+    if ($cltrid = ($params['cltrid'] ?? '')) {
+		if (strlen($cltrid) > 64 || strlen($cltrid) < 4 ) {
+			fwrite(STDERR, "--cltrid must be between 3 and 64 characters\n");
+			exit -1;
+		}
+        $request->sessionid = $cltrid;
+        $request->addSessionId();
+    }
+
     $response = $connection->request($request);
 
     if ($response->Success()) {

@@ -83,6 +83,15 @@ try {
     }
     $ext = new atEppDomainDeleteExtension($arg);
     $request = new atEppDeleteRequest(new atEppDomain($domain), $ext);
+    if ($cltrid = ($params['cltrid'] ?? '')) {
+		if (strlen($cltrid) > 64 || strlen($cltrid) < 4 ) {
+			fwrite(STDERR, "--cltrid must be between 3 and 64 characters\n");
+			exit -1;
+		}
+        $request->sessionid = $cltrid;
+        $request->addSessionId();
+    }
+
     $response = $connection->request($request);
 
     if ($response->Success()) {
