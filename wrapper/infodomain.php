@@ -6,6 +6,7 @@ require_once dirname(__DIR__) . '/vendor/autoload.php';
 use Metaregistrar\EPP\atEppConnection;
 use Metaregistrar\EPP\eppInfoDomainRequest;
 use Metaregistrar\EPP\eppDomain;
+use Metaregistrar\EPP\eppStatus;
 use Metaregistrar\EPP\eppException;
 
 $opts = [
@@ -126,7 +127,15 @@ try {
         echo "ATTR: authInfo: $auth\n";
     }
     foreach ($response->getDomainStatuses() as $status) {
-        echo "ATTR: status: $status\n";
+        if ($status instanceof eppStatus) {
+            $statusDesc = $status->getStatusname();
+            if ($statusMessage = $status->getMessage()) {
+                $statusDesc .= " // $statusMessage";
+            }
+            echo "ATTR: status: {$statusDesc}\n";
+        } else if (is_string($status)) {
+            echo "ATTR: status: $status\n";
+        }
     }
 
     echo "\n"; # separate output channels
