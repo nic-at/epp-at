@@ -5,11 +5,7 @@ require_once dirname(__DIR__) . '/vendor/autoload.php';
 
 use Metaregistrar\EPP\atEppConnection;
 use Metaregistrar\EPP\atEppTransferRequest;
-use Metaregistrar\EPP\eppInfoDomainRequest;
-use Metaregistrar\EPP\atEppContactHandle;
 use Metaregistrar\EPP\atEppDomain;
-use Metaregistrar\EPP\eppHost;
-use Metaregistrar\EPP\eppSecdns;
 use Metaregistrar\EPP\eppException;
 
 $opts = [
