@@ -1,5 +1,11 @@
 {
     "require": {
-        "metaregistrar/php-epp-client": "^1.0"
-    }
+        "metaregistrar/php-epp-client": "dev-full-status-support"
+    },
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://github.com/MikeAT/php-epp-client"
+        }
+    ]
 }

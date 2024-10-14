@@ -4,20 +4,20 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "6b07de49e36c51083ddbb982f12166bf",
+    "content-hash": "21d89598a6bb00de179010532d5758f7",
     "packages": [
         {
             "name": "metaregistrar/php-epp-client",
-            "version": "1.0.13",
+            "version": "dev-full-status-support",
             "source": {
                 "type": "git",
-                "url": "https://github.com/metaregistrar/php-epp-client.git",
-                "reference": "efba35794750fb7e04b3f5f7b904a435f79878ea"
+                "url": "https://github.com/MikeAT/php-epp-client.git",
+                "reference": "3f541ebb1fae701f235efe1f99c024e8a75c7390"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/metaregistrar/php-epp-client/zipball/efba35794750fb7e04b3f5f7b904a435f79878ea",
-                "reference": "efba35794750fb7e04b3f5f7b904a435f79878ea",
+                "url": "https://api.github.com/repos/MikeAT/php-epp-client/zipball/3f541ebb1fae701f235efe1f99c024e8a75c7390",
+                "reference": "3f541ebb1fae701f235efe1f99c024e8a75c7390",
                 "shasum": ""
             },
             "require": {
@@ -35,7 +35,6 @@
                     "Registries/"
                 ]
             },
-            "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "MIT"
             ],
@@ -53,16 +52,17 @@
                 "xml"
             ],
             "support": {
-                "issues": "https://github.com/metaregistrar/php-epp-client/issues",
-                "source": "https://github.com/metaregistrar/php-epp-client/tree/1.0.13"
+                "source": "https://github.com/MikeAT/php-epp-client/tree/full-status-support"
             },
-            "time": "2024-05-16T13:03:04+00:00"
+            "time": "2024-09-24T09:56:36+00:00"
         }
     ],
     "packages-dev": [],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": [],
+    "stability-flags": {
+        "metaregistrar/php-epp-client": 20
+    },
     "prefer-stable": false,
     "prefer-lowest": false,
     "platform": [],
