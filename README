@@ -1,0 +1,96 @@
+What is this?
+-------------
+
+This is the EPP ClientToolkit for the .AT EPP Registry based on Net::DRI. 
+The Toolkit consists of a Net::DRI Perl module backend and commandline 
+wrappers around the Net::DRI backend for an easier startup. For more 
+information on Net::DRI please check the README in the directory 
+Net-DRI-0.96_09
+
+Net::DRI and the wrapper are written in Perl and have been tested on 
+different Linux distributions.
+
+Content of this tarball 
+-----------------------
+
+The directory Net-DRI-0.96_09/ contains a upstream version of dotandco's 
+Net::DRI Version 0.96_09 
+(http://www.dotandco.com/services/software/Net-DRI/index.en). This Version 
+includes the implemenation of RFC 5910 which if needed for the 
+DNSSEC-implementation of the .AT-registry.
+
+The directory wrapper/ contains a sample implementation of Net::DRI based 
+commandlinewrappers for each EPP transaction.
+
+Perl modules needed
+-------------------
+
+Make sure to use at least Perl 5.8.4 as earlier versions have issues
+with utf8 handling which will cause errors for EPP.
+
+You also need the following modules:
+
+Carp (*)
+DateTime
+DateTime::Duration
+DateTime::Format::Strptime
+DateTime::Format::ISO8601 (>=0.06)
+DateTime::TimeZone
+Class::Accessor
+Class::Accessor::Chained
+Time::HiRes
+Email::Valid
+IO::Socket::INET (*)
+IO::Socket::SSL (>=0.90)
+XML::LibXML (>=1.61)
+UNIVERSAL::require
+SOAP::Lite (needed only for BookMyName, OVH, Gandi webservices)
+SOAP::WSDL (needed only for OVH webservices)
+MIME::Entity (needed only for AFNIC emails)
+Net::SMTP (needed only for AFNIC emails)
+LWP::UserAgent (>=6.02) (needed only for OpenSRS, .PL and .IT)
+Digest::MD5 (needed only for OpenSRS)
+Net::DNS (needed only for .DE IRIS DCHK queries)
+IO::Uncompress::RawInflate (needed only for .DE IRIS DCHK queries) (*)
+
+Modules marked (*) are core Perl modules.
+
+Caution: IO::Socket::INET6 < v2.58 contains a bug when connecting to a server 
+which refuses the connection (f.e. the client IP isn't unlocked in firewall of
+the EPP server). The Socket-Module will hang in an infinite loop and produces
+a lot of the following error messages: 
+Use of uninitialized value $fam_listen in numeric ne (!=) at 
+/usr/lib/perl5/vendor_perl/5.10.0/IO/Socket/INET6.pm line 226
+
+
+Install
+-------
+
+Use the standard procedure (in the subdirectory Net-DRI-0.96_09/):
+perl Makefile.PL ; make ; make test ; make install
+Or just copy the content of the lib/ directory somewhere in your path.
+You can use tests available in t/ to make sure everything is well.
+(all tests are done locally and do not require a network connection)
+
+How to use
+----------
+
+NIC.AT provides commandline wrappers for an easier startup. Here is an example 
+commandline wrapper call for a createdomain transaction:
+
+perl createdomain.pl --server <user>:<password>@<server>:<port> \
+                     --logdir /tmp/epp --domain testdomain.at \
+                     --nameserver ns1.test1234.at/2001:628:453:4302::53/2001:628:453:4302::54/192.193.54.34\
+                     --nameserver ns1.testdomain.at/1.2.3.4 \
+                     --registrant XY1231234 \
+                     --techc XY1231234 \
+                     --cltrid my-cltrid-0815
+     
+This command connects to the given registry at <server>:<port>, authenticates 
+with the given username/password and does a "create domain" transaction with 
+the given parameters.
+
+Such command line wrappers are available for all supported epp transactions. 
+Do get the possible parameters for one wrapper just call them without any 
+parameters.
+
