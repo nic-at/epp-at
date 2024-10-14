@@ -56,7 +56,6 @@ try {
     $connection->setHostname('ssl://' . $hostname);
     $connection->setPort($port);
     $connection->setTimeout(10);
-    $connection->setVerifyPeer(false);
 
     if ($logging) {
         $connection->setLogFile(rtrim($logdir, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . date('Y-m-d') . '.log');
