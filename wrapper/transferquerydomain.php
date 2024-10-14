@@ -92,7 +92,7 @@ try {
         if ($acDate = $response->getTransferActionDate()) printf("ATTR: acDate: %s\n", ($acTime = strtotime($acDate)) ? $acDate = date('c', $acTime) : $acDate);
     } else {
         echo 'FAILED: ' . $response->getResultCode() . "\n";
-        echo 'Domain transfer request failed: ' . $response->getResultMessage() . "\n\n";
+        echo 'Domain transfer query failed: ' . $response->getResultMessage() . "\n\n";
     }
 
     check_and_print_conditions($response->getExtensionResult());
