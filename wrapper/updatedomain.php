@@ -10,6 +10,7 @@ use Metaregistrar\EPP\eppInfoDomainRequest;
 use Metaregistrar\EPP\atEppContactHandle;
 use Metaregistrar\EPP\atEppDomain;
 use Metaregistrar\EPP\eppHost;
+use Metaregistrar\EPP\eppStatus;
 use Metaregistrar\EPP\eppSecdns;
 use Metaregistrar\EPP\eppException;
 
@@ -18,6 +19,8 @@ $opts = [
     'domain:',
     'addns:',
     'delns:',
+    'addstatus:',
+    'delstatus:',
     'registrant:',
     'addtechc:',
     'deltechc:',
@@ -38,6 +41,8 @@ $serverstring = $params['server'] ?? '';
 $domain = $params['domain'] ?? '';
 $addns = (array) ($params['addns'] ?? []);
 $delns = (array) ($params['delns'] ?? []);
+$addstatus = (array) ($params['addstatus'] ?? []);
+$delstatus = (array) ($params['delstatus'] ?? []);
 $registrant = $params['registrant'] ?? null;
 $addtechc = (array) ($params['addtechc'] ?? []);
 $deltechc = (array) ($params['deltechc'] ?? []);
@@ -123,7 +128,7 @@ try {
         echo "ATTR: svTRID: " . $response->getSvTrId() . "\n";
     }
 
-    if ($addns || $delns || $registrant || $addtechc || $deltechc || $addsecdns || $delsecdns || $delallsecdns || $auth) {
+    if ($addns || $delns || $addstatus || $delstatus || $registrant || $addtechc || $deltechc || $addsecdns || $delsecdns || $delallsecdns || $auth) {
 
         $chg = new atEppDomain($domain);
         $add = $rem = null;
@@ -155,6 +160,20 @@ try {
                     }
                     $add->addHost(new eppHost($host[0], $host[$i]));
                 }
+            }
+        }
+
+        // Handle status
+        foreach ($delstatus as $status) {
+            if (!$rem) $rem = new atEppDomain($domain);
+            $rem->addStatus(new eppStatus($status));
+        }
+
+        foreach ($addstatus as $status) {
+            if (!$add) $add = new atEppDomain($domain);
+            $statusInfo = explode('/', $status);
+            if ($statusInfo) {
+                $add->addStatus(new eppStatus($statusInfo[0], null, $statusInfo[1] ?? null));
             }
         }
 
@@ -274,6 +293,8 @@ usage:
                 --domain <domain>
                 [--addns <nsname>[/<ipaddr>[/<ipaddr>]]]
                 [--delns <nsname>]
+                [--addstatus <statusname>[/<message>]]
+                [--delstatus <statusname>]
                 [--registrant <registrant>]
                 [--addtechc <tech-c>]
                 [--deltechc <tech-c>]
