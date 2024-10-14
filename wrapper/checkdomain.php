@@ -67,6 +67,15 @@ try {
     $logged_in = $connection->login();
 
     $request = new eppCheckDomainRequest((array)$domain);
+    if ($cltrid = ($params['cltrid'] ?? '')) {
+        if (strlen($cltrid) > 64 || strlen($cltrid) < 4 ) {
+            fwrite(STDERR, "--cltrid must be between 3 and 64 characters\n");
+            exit -1;
+        }
+        $request->sessionid = $cltrid;
+        $request->addSessionId();
+    }
+
     $response = $connection->request($request);
 
     if ($response->Success()) {
@@ -81,6 +90,9 @@ try {
         echo 'FAILED: ' . $response->getResultCode() . "\n";
         echo 'Domain check failed: ' . $response->getResultMessage() . "\n\n";
     }
+
+    echo "\nATTR: clTRID: " . $response->getClientTransactionId() . "\n";
+    echo "ATTR: svTRID: " . $response->getServerTransactionId() . "\n";
 
     $connection->logout();
     $connection->disconnect();
