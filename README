@@ -31,7 +31,12 @@ Make sure to use at least PHP7 (we recommend at least PHP8) as well as ext-dom a
 Install
 -------
 
+Tarball:
 Unpack the contents of this tarball and make sure your PHP cli binary is in PATH.
+
+Source code:
+- checkout the code
+- run `composer install`
 
 How to use
 ----------
