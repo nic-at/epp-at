@@ -3,40 +3,34 @@
 
 require_once dirname(__DIR__) . '/vendor/autoload.php';
 
-use Metaregistrar\EPP\atEppConnection;
+use EppAt\EppHelper;
 use Metaregistrar\EPP\atEppContact;
+use Metaregistrar\EPP\atEppVerificationReport;
 use Metaregistrar\EPP\atEppUpdateContactExtension;
 use Metaregistrar\EPP\atEppUpdateContactRequest;
-use Metaregistrar\EPP\eppException;
 use Metaregistrar\EPP\atEppContactHandle;
 use Metaregistrar\EPP\eppContactPostalInfo;
 use Metaregistrar\EPP\eppInfoContactRequest;
 
-$opts = [
-    'server:',
+$params = EppHelper::getOpt([
     'id:',
     'name:',
     'org::',
     'street:',
     'city:',
     'postalcode:',
+    'province::',
     'country:',
     'voice:',
-    'fax:',
     'email:',
-    'disclose-phone:',
-    'disclose-fax:',
-    'disclose-email:',
     'type:',
-    'cltrid:',
-    'logdir:',
-    'logfile',
-    'nossl',
-];
+    'verification-report-result:',
+    'verification-report-date:',
+    'verification-report-method:',
+    'verification-report-reference:',
+    'verification-report-agent:',
+]);
 
-$params = getopt('', $opts);
-
-$serverstring = $params['server'] ?? '';
 $id = $params['id'] ?? '';
 $name = $params['name'] ?? null;
 $org = $params['org'] ?? null;
@@ -44,12 +38,19 @@ $street = $params['street'] ?? null;
 $city = $params['city'] ?? null;
 $country = $params['country'] ?? null;
 $postalcode = $params['postalcode'] ?? null;
+$province = $params['province'] ?? null;
 $phone = $params['voice'] ?? null;
-$fax = $params['fax'] ?? null;
 $email = $params['email'] ?? null;
 $type = $params['type'] ?? null;
+$verification_report = [
+    'result'    => $params['verification-report-result']    ?? null,
+    'date'      => $params['verification-report-date']      ?? null,
+    'method'    => $params['verification-report-method']    ?? null,
+    'reference' => $params['verification-report-reference'] ?? null,
+    'agent'     => $params['verification-report-agent']     ?? null,
+];
 
-$uniqueargs = ['name', 'org', 'city', 'postalcode', 'country', 'phone', 'voice', 'fax', 'email', 'type'];
+$uniqueargs = ['name', 'org', 'city', 'postalcode', 'province', 'country', 'phone', 'voice', 'email', 'type'];
 
 foreach ($uniqueargs as $uarg) {
 	if (is_array($params[$uarg] ?? null)) {
@@ -59,7 +60,7 @@ foreach ($uniqueargs as $uarg) {
 }
 
 // Ensure required parameters are there
-if (!($serverstring && $id)) {
+if (!$id) {
     usage();
 }
 
@@ -69,56 +70,23 @@ if ($type && !in_array($type, ['privateperson', 'organisation', 'role'])) {
 	exit -1;
 }
 
-// Parsing the server string
-if (!preg_match('/^([\w\d]+):([\S:@]+)@(\S+):(\d+)$/', $serverstring, $matches)) {
-    fwrite(STDERR, "could not parse server string '$serverstring'\n");
-    exit -1;
-}
-[, $username, $password, $hostname, $port] = $matches;
-
-// Validate the disclose flags
-foreach (['email', 'fax', 'phone'] as $disclose) {
-    if (!in_array($params["disclose-{$disclose}"] ?? 0, [0, 1])) {
-        fwrite(STDERR, "--disclose-{$disclose} has to be set to 0 or 1\n");
-		exit -1;
-    }
-}
-
-// Check nossl
-if (isset($params['nossl'])) {
-    echo "Warning: --nossl is deprecated and will be ignored ...\n";
-}
-
-try {
-    $logging = false;
-
-    // Check logfile
-    if (isset($params['logfile'])) {
-        fwrite(STDERR, "The option --logfile is deprecated\n");
-        fwrite(STDERR, "use --logdir <directory> instead\n");
-        exit -1;
-    }
-
-    if ($logdir = ($params['logdir'] ?? '')) {
-        $logging = true;
-    }
-
-    $connection = new atEppConnection($logging);
-    $connection->setHostname('ssl://' . $hostname);
-    $connection->setPort($port);
-    $connection->setTimeout(10);
-
-    if ($logging) {
-        $connection->setLogFile(rtrim($logdir, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . date('Y-m-d') . '.log');
-    }
-    $connected = $connection->connect();
-    $connection->setUsername($username);
-    $connection->setPassword($password);
-    $logged_in = $connection->login();
-
+EppHelper::execute($params, function($connection, $params) {
+    $id = $params['id'] ?? '';
+    $name = $params['name'] ?? null;
+    $org = $params['org'] ?? null;
+    $street = $params['street'] ?? null;
+    $city = $params['city'] ?? null;
+    $country = $params['country'] ?? null;
+    $postalcode = $params['postalcode'] ?? null;
+    $province = $params['province'] ?? null;
+    $phone = $params['voice'] ?? null;
+    $email = $params['email'] ?? null;
+    $type = $params['type'] ?? null;
+    
     // Fetch the existing contact
     $handle = new atEppContactHandle($id);
-    $request = new eppInfoContactRequest($handle);
+
+    $request = EppHelper::prepareRequest($params, eppInfoContactRequest::class, $handle);
     $response = $connection->request($request);
     $contact = $response->getContact();
     $postal = $contact->getPostalInfo(0);
@@ -133,38 +101,46 @@ try {
     }
     if (is_null($city)) $city = $postal->getCity();
     if (is_null($postalcode)) $postalcode = $postal->getZipcode();
+    if (is_null($province)) $province = $postal->getProvince();
     if (is_null($country)) $country = $postal->getCountrycode();
 
     if (is_null($type)) $type = $response->getPersonType();
-    if (is_null($email)) $email = $contact->getEmail();
+
     if (is_null($phone)) $phone = $contact->getVoice();
-    if (is_null($fax)) $fax = $contact->getFax();
+    if (is_null($email)) $email = $contact->getEmail();
 
-    $hideEmail = isset($params['disclose-email']) ? (0 == ($params['disclose-email'] ?? 1)) : $response->getWhoisHideEmail();
-    $hidePhone = isset($params['disclose-phone']) ? (0 == ($params['disclose-phone'] ?? 1)) : $response->getWhoisHidePhone();
-    $hideFax = isset($params['disclose-fax']) ? (0 == ($params['disclose-fax'] ?? 1)) : $response->getWhoisHideFax();
+    $verification_report = [
+        'result'    => $params['verification-report-result']    ?? null,
+        'date'      => $params['verification-report-date']      ?? null,
+        'method'    => $params['verification-report-method']    ?? null,
+        'reference' => $params['verification-report-reference'] ?? null,
+        'agent'     => $params['verification-report-agent']     ?? null,
+    ];
 
-    $postalInfo = new eppContactPostalInfo($name, $city, $country, $org, $street, null, $postalcode);
-    $contact = new atEppContact($postalInfo, $type, $email, $phone, $fax, $hideEmail, $hidePhone, $hideFax);
-
-    // Registry default behaviour disclose=1
-    // is something is hidden set the disclose-policy
-    $contact->setDisclose(($hideEmail || $hidePhone || $hideFax) ? 0 : 1);
-
-    $ext = new atEppUpdateContactExtension($contact);
-    $request = new atEppUpdateContactRequest($handle, null, null, $contact, $ext);
-    if ($cltrid = ($params['cltrid'] ?? '')) {
-		if (strlen($cltrid) > 64 || strlen($cltrid) < 4 ) {
-			fwrite(STDERR, "--cltrid must be between 3 and 64 characters\n");
-			exit -1;
-		}
-        $request->sessionid = $cltrid;
-        $request->addSessionId();
+    $verification = null;
+    if ($verification_report['result'] && $verification_report['date']) {
+        $verification = new atEppVerificationReport(
+            $verification_report['result'],
+            $verification_report['date'],
+            $verification_report['method'],
+            $verification_report['reference'],
+            $verification_report['agent']
+        );
     }
 
+    $postalInfo = new eppContactPostalInfo($name, $city, $country, $org, $street, $province, $postalcode);
+    $contact = new atEppContact($postalInfo, $type, $email, $phone, null, false,
+                                false, false, null, null, $verification);
+
+    $ext = new atEppUpdateContactExtension($contact);
+
+    $request = EppHelper::prepareRequest(
+        $params, 
+        atEppUpdateContactRequest::class, 
+        $handle, null, null, $contact, $ext
+    );
+
     $response = $connection->request($request);
-    $connection->logout();
-    $connection->disconnect();
 
     if ($response->Success()) {
         echo 'SUCCESS: ' . $response->getResultCode() . "\n";
@@ -173,29 +149,12 @@ try {
         echo 'Contact update failed: ' . $response->getResultMessage() . "\n\n";
     }
 
-    check_and_print_conditions($response->getExtensionResult());
+    EppHelper::checkAndPrintConditions($response->getExtensionResult());
 
     echo "\nATTR: clTRID: " . $response->getClTrId() . "\n";
     echo "ATTR: svTRID: " . $response->getSvTrId() . "\n";
 
-} catch (eppException $e) {
-    echo $e->getMessage() . "\n";
-    check_and_print_conditions(json_decode($e->getReason(), true));
-    exit -1;
-}
-
-function check_and_print_conditions($conditions) {
-    if (!is_array($conditions)) return false;
-    foreach ($conditions as $condition) {
-        if (!empty($condition['message'])) {
-            echo "Msg: {$condition['message']}\n";
-        }
-        if (!empty($condition['details'])) {
-            echo "Details: {$condition['details']}\n";
-        }
-        echo "\n";
-    }
-}
+});
 
 function usage() {
     echo <<<END
@@ -210,16 +169,18 @@ updatecontact  --server <user>:<pass>@<host>:<port> \
                [--street <street>]
                [--city	<city>]
                [--postalcode <postalcode>]
+               [--province <province>]
                [--country <country>]
                [--voice <voice>]
-               [--fax <fax>]
                [--email <email>]
-               [--disclose-phone <0|1>]
-               [--disclose-fax <0|1>]
-               [--disclose-email <0|1>]
                [--type=(privateperson|organisation|role)]
                [--cltrid <cltrid>]
                [--logdir <directory>]
+               [--verification-report-result <result>]
+               [--verification-report-date <date>]
+               [--verification-report-method <method>]
+               [--verification-report-reference <reference>]
+               [--verification-report-agent <agent>]
 
 
     Use --<option> "" do delete the specific value,
@@ -227,5 +188,5 @@ updatecontact  --server <user>:<pass>@<host>:<port> \
 
 END;
 
-    exit -1;
+    exit(-1);
 }

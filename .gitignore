@@ -1,1 +1,4 @@
 vendor
+.env
+/epp-at
+/epp-at.phar

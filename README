@@ -30,7 +30,6 @@ Make sure to use at least PHP7 (we recommend at least PHP8) as well as ext-dom a
 
 Install
 -------
-
 Tarball:
 Unpack the contents of this tarball and make sure your PHP cli binary is in PATH.
 
@@ -51,12 +50,22 @@ php createdomain.php --server <user>:<password>@<server>:<port> \
                      --registrant XY1231234 \
                      --techc XY1231234 \
                      --cltrid my-cltrid-0815
+
+Alternatively you can also use a `.env` file to supply the basic configuration. 
+See the [env.example](env.example) file for an example. The .env file should be 
+placed in your working directory. Alternatively you can also supply another
+filename for the env file using the `--env-file` flag. If you want to set
+options with a name that contains hyphens (`-`) via the `.env` file, replace them 
+by underscores, e.g.: `skip_verify_peeer=true` to set the `--skip-verify-peer` flag.
      
 This command connects to the given registry at <server>:<port>, authenticates 
 with the given username/password and does a "create domain" transaction with 
 the given parameters.
 
 Such command line wrappers are available for all supported epp transactions. 
-Do get the possible parameters for one wrapper just call them without any 
-parameters.
+To get the possible parameters for one wrapper just call them without any 
+parameters. To get a list of the available commands, run `--command=list` if
+you are using the phar or the compiled binary or check the `wrapper/` directory.
+
+The `--command=version` option shows version information.
 

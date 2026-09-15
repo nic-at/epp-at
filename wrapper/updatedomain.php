@@ -3,7 +3,7 @@
 
 require_once dirname(__DIR__) . '/vendor/autoload.php';
 
-use Metaregistrar\EPP\atEppConnection;
+use EppAt\EppHelper;
 use Metaregistrar\EPP\atEppUpdateDomainRequest;
 use Metaregistrar\EPP\atEppUndeleteRequest;
 use Metaregistrar\EPP\eppInfoDomainRequest;
@@ -12,10 +12,8 @@ use Metaregistrar\EPP\atEppDomain;
 use Metaregistrar\EPP\eppHost;
 use Metaregistrar\EPP\eppStatus;
 use Metaregistrar\EPP\eppSecdns;
-use Metaregistrar\EPP\eppException;
 
-$opts = [
-    'server:',
+$params = EppHelper::getOpt([
     'domain:',
     'addns:',
     'delns:',
@@ -29,31 +27,14 @@ $opts = [
     'delsecdns-all',
     'restore',
     'authinfo:',
-    'cltrid:',
-    'logdir:',
-    'logfile',
-    'nossl',
-];
+]);
 
-$params = getopt('', $opts);
-
-$serverstring = $params['server'] ?? '';
 $domain = $params['domain'] ?? '';
-$addns = (array) ($params['addns'] ?? []);
-$delns = (array) ($params['delns'] ?? []);
-$addstatus = (array) ($params['addstatus'] ?? []);
-$delstatus = (array) ($params['delstatus'] ?? []);
-$registrant = $params['registrant'] ?? null;
-$addtechc = (array) ($params['addtechc'] ?? []);
-$deltechc = (array) ($params['deltechc'] ?? []);
-$addsecdns = (array) ($params['addsecdns'] ?? []);
 $delsecdns = (array) ($params['delsecdns'] ?? []);
 $delallsecdns = isset($params['delsecdns-all']);
-$restore = isset($params['restore']);
-$auth = $params['authinfo'] ?? null;
 
 // Ensure required parameters are there
-if (!($serverstring && $domain)) {
+if (!$domain) {
     usage();
 }
 
@@ -63,44 +44,20 @@ if ($delallsecdns && $delsecdns) {
 	usage();
 }
 
-// Parsing the server string
-if (!preg_match('/^([\w\d]+):([\S:@]+)@(\S+):(\d+)$/', $serverstring, $matches)) {
-    fwrite(STDERR, "could not parse server string '$serverstring'\n");
-    exit -1;
-}
-[, $username, $password, $hostname, $port] = $matches;
-
-// Check nossl
-if (isset($params['nossl'])) {
-    echo "Warning: --nossl is deprecated and will be ignored ...\n";
-}
-
-try {
-    $logging = false;
-
-    // Check logfile
-    if (isset($params['logfile'])) {
-        fwrite(STDERR, "The option --logfile is deprecated\n");
-        fwrite(STDERR, "use --logdir <directory> instead\n");
-        exit -1;
-    }
-
-    if ($logdir = ($params['logdir'] ?? '')) {
-        $logging = true;
-    }
-
-    $connection = new atEppConnection($logging);
-    $connection->setHostname('ssl://' . $hostname);
-    $connection->setPort($port);
-    $connection->setTimeout(10);
-
-    if ($logging) {
-        $connection->setLogFile(rtrim($logdir, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . date('Y-m-d') . '.log');
-    }
-    $connected = $connection->connect();
-    $connection->setUsername($username);
-    $connection->setPassword($password);
-    $logged_in = $connection->login();
+EppHelper::execute($params, function($connection, $params) {
+    $domain = $params['domain'] ?? '';
+    $addns = (array) ($params['addns'] ?? []);
+    $delns = (array) ($params['delns'] ?? []);
+    $registrant = $params['registrant'] ?? null;
+    $addstatus = (array) ($params['addstatus'] ?? []);
+    $delstatus = (array) ($params['delstatus'] ?? []);
+    $addtechc = (array) ($params['addtechc'] ?? []);
+    $deltechc = (array) ($params['deltechc'] ?? []);
+    $addsecdns = (array) ($params['addsecdns'] ?? []);
+    $delsecdns = (array) ($params['delsecdns'] ?? []);
+    $delallsecdns = isset($params['delsecdns-all']);
+    $restore = isset($params['restore']);
+    $auth = $params['authinfo'] ?? null;
 
     // Run undelete request if restore is called
     if ($restore) {
@@ -108,7 +65,7 @@ try {
         if ($cltrid = ($params['cltrid'] ?? '')) {
             if (strlen($cltrid) > 64 || strlen($cltrid) < 4 ) {
                 fwrite(STDERR, "--cltrid must be between 3 and 64 characters\n");
-                exit -1;
+                exit(-1);
             }
             $request->sessionid = $cltrid;
             $request->addSessionId();
@@ -122,13 +79,13 @@ try {
             echo 'Domain restore failed: ' . $response->getResultMessage() . "\n\n";
         }
 
-        check_and_print_conditions($response->getExtensionResult());
+        EppHelper::checkAndPrintConditions($response->getExtensionResult());
 
         echo "\nATTR: clTRID: " . $response->getClTrId() . "\n";
         echo "ATTR: svTRID: " . $response->getSvTrId() . "\n";
     }
 
-    if ($addns || $delns || $addstatus || $delstatus || $registrant || $addtechc || $deltechc || $addsecdns || $delsecdns || $delallsecdns || $auth) {
+    if ($addns || $delns || $addstatus || $delstatus || $registrant || $addstatus || $delstatus || $addtechc || $deltechc || $addsecdns || $delsecdns || $delallsecdns || $auth) {
 
         $chg = new atEppDomain($domain);
         $add = $rem = null;
@@ -156,7 +113,7 @@ try {
                 for ($i = 1; $i < count($host); $i++) {
                     if ($host[$i] && !filter_var($host[$i], FILTER_VALIDATE_IP, FILTER_FLAG_IPV4) && !filter_var($host[$i], FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)) {
                         fwrite(STDERR, $host[$i] . " is not a valid IPv4/IPv6 Address\n");
-                        exit -1;
+                        exit(-1);
                     }
                     $add->addHost(new eppHost($host[0], $host[$i]));
                 }
@@ -236,16 +193,11 @@ try {
             }
         }
 
-        $request = new atEppUpdateDomainRequest($domain, $add, $rem, $chg, true);
-        if ($cltrid = ($params['cltrid'] ?? '')) {
-            if (strlen($cltrid) > 64 || strlen($cltrid) < 4 ) {
-                fwrite(STDERR, "--cltrid must be between 3 and 64 characters\n");
-                exit -1;
-            }
-            $request->sessionid = $cltrid;
-            $request->addSessionId();
-        }
-
+        $request = EppHelper::prepareRequest(
+            $params, 
+            atEppUpdateDomainRequest::class,
+            $domain, $add, $rem, $chg, true
+        );
         $response = $connection->request($request);
 
         if ($response->Success()) {
@@ -255,7 +207,7 @@ try {
             echo 'Domain update failed: ' . $response->getResultMessage() . "\n\n";
         }
 
-        check_and_print_conditions($response->getExtensionResult());
+        EppHelper::checkAndPrintConditions($response->getExtensionResult());
 
         echo "\nATTR: clTRID: " . $response->getClTrId() . "\n";
         echo "ATTR: svTRID: " . $response->getSvTrId() . "\n";
@@ -265,24 +217,7 @@ try {
     $connection->logout();
     $connection->disconnect();
 
-} catch (eppException $e) {
-    echo $e->getMessage() . "\n";
-    check_and_print_conditions(json_decode($e->getReason(), true));
-    exit -1;
-}
-
-function check_and_print_conditions($conditions) {
-    if (!is_array($conditions)) return false;
-    foreach ($conditions as $condition) {
-        if (!empty($condition['message'])) {
-            echo "Msg: {$condition['message']}\n";
-        }
-        if (!empty($condition['details'])) {
-            echo "Details: {$condition['details']}\n";
-        }
-        echo "\n";
-    }
-}
+});
 
 function usage() {
     echo <<<END
@@ -314,5 +249,5 @@ Note: The Unix shell intercepts some special characters and tries to
 
 END;
 
-    exit -1;
+    exit(-1);
 }
