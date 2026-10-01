@@ -143,7 +143,7 @@ class EppHelper {
                 $connection = EppHelper::connect($params, skip_login: $skip_login);
             } catch(eppException $e) {
                 self::formatEppException($e);
-                throw $e;
+                exit(1);
             }
 
             $reflection = new ReflectionFunction($fn);
@@ -167,7 +167,6 @@ class EppHelper {
                 return call_user_func($fn, ...$call_args);
             } catch(eppException $e) {
                 self::formatEppException($e);
-                throw $e;
             } finally {
                 if(!$connection->isLoggedin()) $connection->logout();
                 $connection->disconnect();
@@ -179,7 +178,9 @@ class EppHelper {
 
     public static function formatEppException(eppException $e) {
         echo $e->getMessage() . "\n";
-        self::checkAndPrintConditions(json_decode($e->getReason(), true));
+        if ($reason = $e->getReason()) {
+            self::checkAndPrintConditions(json_decode($reason, true));
+        }
     }
 
     public static function setCltrid(?string $cltrid, eppRequest &$request) {

@@ -104,7 +104,7 @@ EppHelper::execute($params, function($connection, $params) {
     }
 
     if ($validation = $response->getValidationReport()) {
-        echo "  --- Validation Report ---\n";
+        echo "  --- Verification Report ---\n";
         if ($validation->getResult()) {
             echo "ATTR: Result: " . $validation->getResult() . "\n";
         }

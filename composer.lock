@@ -74,12 +74,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/metaregistrar/php-epp-client.git",
-                "reference": "5ce10e02c7117b7b8098e2957d2d5bd90c62d6f7"
+                "reference": "a4bab33addf793d8e4b5457f84e19c16d09b1399"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/metaregistrar/php-epp-client/zipball/5ce10e02c7117b7b8098e2957d2d5bd90c62d6f7",
-                "reference": "5ce10e02c7117b7b8098e2957d2d5bd90c62d6f7",
+                "url": "https://api.github.com/repos/metaregistrar/php-epp-client/zipball/a4bab33addf793d8e4b5457f84e19c16d09b1399",
+                "reference": "a4bab33addf793d8e4b5457f84e19c16d09b1399",
                 "shasum": ""
             },
             "require": {
@@ -120,7 +120,7 @@
                 "issues": "https://github.com/metaregistrar/php-epp-client/issues",
                 "source": "https://github.com/metaregistrar/php-epp-client/tree/master"
             },
-            "time": "2026-08-21T12:54:06+00:00"
+            "time": "2026-10-01T07:04:47+00:00"
         },
         {
             "name": "phpoption/phpoption",

@@ -31,24 +31,9 @@ $params = EppHelper::getOpt([
     'verification-report-agent:',
 ]);
 
+// Validate params
 $id = $params['id'] ?? '';
-$name = $params['name'] ?? null;
-$org = $params['org'] ?? null;
-$street = $params['street'] ?? null;
-$city = $params['city'] ?? null;
-$country = $params['country'] ?? null;
-$postalcode = $params['postalcode'] ?? null;
-$province = $params['province'] ?? null;
-$phone = $params['voice'] ?? null;
-$email = $params['email'] ?? null;
 $type = $params['type'] ?? null;
-$verification_report = [
-    'result'    => $params['verification-report-result']    ?? null,
-    'date'      => $params['verification-report-date']      ?? null,
-    'method'    => $params['verification-report-method']    ?? null,
-    'reference' => $params['verification-report-reference'] ?? null,
-    'agent'     => $params['verification-report-agent']     ?? null,
-];
 
 $uniqueargs = ['name', 'org', 'city', 'postalcode', 'province', 'country', 'phone', 'voice', 'email', 'type'];
 
@@ -72,17 +57,7 @@ if ($type && !in_array($type, ['privateperson', 'organisation', 'role'])) {
 
 EppHelper::execute($params, function($connection, $params) {
     $id = $params['id'] ?? '';
-    $name = $params['name'] ?? null;
-    $org = $params['org'] ?? null;
-    $street = $params['street'] ?? null;
-    $city = $params['city'] ?? null;
-    $country = $params['country'] ?? null;
-    $postalcode = $params['postalcode'] ?? null;
-    $province = $params['province'] ?? null;
-    $phone = $params['voice'] ?? null;
-    $email = $params['email'] ?? null;
-    $type = $params['type'] ?? null;
-    
+
     // Fetch the existing contact
     $handle = new atEppContactHandle($id);
 
@@ -91,23 +66,30 @@ EppHelper::execute($params, function($connection, $params) {
     $contact = $response->getContact();
     $postal = $contact->getPostalInfo(0);
 
-    if (is_null($name)) $name = $postal->getName();
-    if (is_null($org)) $org = $postal->getOrganisationName();
-    if (is_null($street)) {
-        $street = [];
-        for ($i = 0; $i < $postal->getStreetCount(); $i++) {
-            $street[] = $postal->getStreet($i);
-        }
+    $oldName = $postal->getName();
+    $oldOrg = $postal->getOrganisationName();
+    $oldStreet = [];
+    for ($i = 0; $i < $postal->getStreetCount(); $i++) {
+        $oldStreet[] = $postal->getStreet($i);
     }
-    if (is_null($city)) $city = $postal->getCity();
-    if (is_null($postalcode)) $postalcode = $postal->getZipcode();
-    if (is_null($province)) $province = $postal->getProvince();
-    if (is_null($country)) $country = $postal->getCountrycode();
+    $oldCity = $postal->getCity();
+    $oldPostalcode = $postal->getZipcode();
+    $oldProvince = $postal->getProvince();
+    $oldCountry = $postal->getCountrycode();
+    $oldType = $response->getPersonType();
+    $oldPhone = $contact->getVoice();
+    $oldEmail = $contact->getEmail();
 
-    if (is_null($type)) $type = $response->getPersonType();
-
-    if (is_null($phone)) $phone = $contact->getVoice();
-    if (is_null($email)) $email = $contact->getEmail();
+    $name = $params['name'] ?? $oldName;
+    $org = $params['org'] ?? $oldOrg;
+    $street = $params['street'] ?? $oldStreet;
+    $city = $params['city'] ?? $oldCity;
+    $country = $params['country'] ?? $oldCountry;
+    $postalcode = $params['postalcode'] ?? $oldPostalcode;
+    $province = $params['province'] ?? $oldProvince;
+    $phone = $params['voice'] ?? $oldPhone;
+    $email = $params['email'] ?? $oldEmail;
+    $type = $params['type'] ?? $oldType;
 
     $verification_report = [
         'result'    => $params['verification-report-result']    ?? null,
@@ -116,6 +98,18 @@ EppHelper::execute($params, function($connection, $params) {
         'reference' => $params['verification-report-reference'] ?? null,
         'agent'     => $params['verification-report-agent']     ?? null,
     ];
+
+    $changed =
+        $name !== $oldName ||
+        $org !== $oldOrg ||
+        $street !== $oldStreet ||
+        $city !== $oldCity ||
+        $postalcode !== $oldPostalcode ||
+        $province !== $oldProvince ||
+        $country !== $oldCountry ||
+        $type !== $oldType ||
+        $phone !== $oldPhone ||
+        $email !== $oldEmail;
 
     $verification = null;
     if ($verification_report['result'] && $verification_report['date']) {
@@ -137,7 +131,7 @@ EppHelper::execute($params, function($connection, $params) {
     $request = EppHelper::prepareRequest(
         $params, 
         atEppUpdateContactRequest::class, 
-        $handle, null, null, $contact, $ext
+        $handle, null, null, $changed ? $contact : null, $ext
     );
 
     $response = $connection->request($request);
