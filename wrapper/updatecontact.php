@@ -15,11 +15,11 @@ use Metaregistrar\EPP\eppInfoContactRequest;
 $params = EppHelper::getOpt([
     'id:',
     'name:',
-    'org::',
+    'org:',
     'street:',
     'city:',
     'postalcode:',
-    'province::',
+    'province:',
     'country:',
     'voice:',
     'email:',

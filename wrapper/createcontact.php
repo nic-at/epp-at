@@ -13,7 +13,7 @@ $params = EppHelper::getOpt([
     'street:',
     'city:',
     'postalcode:',
-    'province::',
+    'province:',
     'country:',
     'voice:',
     'email:',
