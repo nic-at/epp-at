@@ -107,9 +107,10 @@ EppHelper::execute($params, function($connection, $params) {
         $postalcode !== $oldPostalcode ||
         $province !== $oldProvince ||
         $country !== $oldCountry ||
-        $type !== $oldType ||
         $phone !== $oldPhone ||
         $email !== $oldEmail;
+
+    $persTypeChanged = $type !== $oldType;
 
     $verification = null;
     if ($verification_report['result'] && $verification_report['date']) {
@@ -123,10 +124,12 @@ EppHelper::execute($params, function($connection, $params) {
     }
 
     $postalInfo = new eppContactPostalInfo($name, $city, $country, $org, $street, $province, $postalcode);
-    $contact = new atEppContact($postalInfo, $type, $email, $phone, null, false,
-                                false, false, null, null, $verification);
+    $contact = new atEppContact($postalInfo, $type, $email, $phone, null, false, false, false, null, null, $verification);
 
-    $ext = new atEppUpdateContactExtension($contact);
+    $ext = null;
+    if ($persTypeChanged || $verification) {
+        $ext = new atEppUpdateContactExtension($contact, null, $persTypeChanged);
+    }
 
     $request = EppHelper::prepareRequest(
         $params, 

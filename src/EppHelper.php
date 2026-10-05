@@ -143,7 +143,7 @@ class EppHelper {
                 $connection = EppHelper::connect($params, skip_login: $skip_login);
             } catch(eppException $e) {
                 self::formatEppException($e);
-                exit(1);
+                throw $e;
             }
 
             $reflection = new ReflectionFunction($fn);
@@ -167,11 +167,12 @@ class EppHelper {
                 return call_user_func($fn, ...$call_args);
             } catch(eppException $e) {
                 self::formatEppException($e);
+                throw $e;
             } finally {
                 if(!$connection->isLoggedin()) $connection->logout();
                 $connection->disconnect();
             }
-        } catch(atEppException $e) {
+        } catch(eppException $e) {
             if($exit_on_error) exit(-1);
         }
     }

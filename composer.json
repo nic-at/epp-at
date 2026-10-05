@@ -5,5 +5,11 @@
     },
     "autoload": {
         "psr-4": { "EppAt\\": "src/" }
-    }
+    },
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://github.com/nic-at/php-epp-client"
+        }
+    ]
 }

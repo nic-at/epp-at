@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "032412b4045d8b3c7b4f3192d08d997c",
+    "content-hash": "491793184946f61f52ffbd491b9e9e5a",
     "packages": [
         {
             "name": "graham-campbell/result-type",
@@ -73,13 +73,13 @@
             "version": "dev-master",
             "source": {
                 "type": "git",
-                "url": "https://github.com/metaregistrar/php-epp-client.git",
-                "reference": "a4bab33addf793d8e4b5457f84e19c16d09b1399"
+                "url": "https://github.com/nic-at/php-epp-client.git",
+                "reference": "9beff6c3eee95e3544c3e8066250f1c27138611d"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/metaregistrar/php-epp-client/zipball/a4bab33addf793d8e4b5457f84e19c16d09b1399",
-                "reference": "a4bab33addf793d8e4b5457f84e19c16d09b1399",
+                "url": "https://api.github.com/repos/nic-at/php-epp-client/zipball/9beff6c3eee95e3544c3e8066250f1c27138611d",
+                "reference": "9beff6c3eee95e3544c3e8066250f1c27138611d",
                 "shasum": ""
             },
             "require": {
@@ -99,7 +99,6 @@
                     "Registries/"
                 ]
             },
-            "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "MIT"
             ],
@@ -117,10 +116,9 @@
                 "xml"
             ],
             "support": {
-                "issues": "https://github.com/metaregistrar/php-epp-client/issues",
-                "source": "https://github.com/metaregistrar/php-epp-client/tree/master"
+                "source": "https://github.com/nic-at/php-epp-client/tree/master"
             },
-            "time": "2026-10-01T07:04:47+00:00"
+            "time": "2026-10-05T09:37:41+00:00"
         },
         {
             "name": "phpoption/phpoption",
